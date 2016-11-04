@@ -150,11 +150,19 @@ if [ "$CompleteQuery" != "" ]; then
    exit
 fi
 
-
 Task=$@
 
 if [ "$Task" == "" ]; then
    cat $File
+   NTodo=`grep "^[ ]*-[ ]*.*" $File | wc -l`
+   NDone=`grep "^[ ]*[xX][ ]*.*" $File | wc -l`
+   if [ "$NDone" == "0" ]; then
+      echo "$NTodo active tasks"
+   elif [ "$NDone" == "1" ]; then
+      echo "$NTodo active tasks and $NDone done task (use -a to archive)"
+   else
+      echo "$NTodo active tasks and $NDone done tasks (use -a to archive)"
+   fi
    exit
 fi
 
