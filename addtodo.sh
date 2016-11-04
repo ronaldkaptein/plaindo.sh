@@ -3,7 +3,7 @@
 #Defaults
 File="~/todo.md"
 ShowDue=0
-Archive=1
+Archive=0
 
 usage()
 {
