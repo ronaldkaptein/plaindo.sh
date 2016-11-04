@@ -4,21 +4,34 @@
 File="~/todo.md"
 ShowDue=0
 Archive=0
+CompleteQuery=""
 
 usage()
 {
    cat << EOF
+SYNOPSIS
    usage addtodo.sh [OPTIONS]  task
 
-   Adds task to todofile. If a string of format @project or +project
-   is present
-   in the task, the task is filed under that project. If not project
-   specified, the task is filed under project "INBOX". Matching is 
-   case insensitive
-   
-   Project in the file are defined by line starting with #, followed
-   by the project name. The project name cannot contain spaces.
+DESCRIPTION
+   Utility to interact with a plain text todo file via the command line. It
+   allows you to add tasks, and so some simple operations. More complex
+   editing can be done with your text editor (see -e option).
 
+   The plain-text todo file is assumed to have the format:
+
+   # Project1
+      - Task 1
+      - Task 2
+   # Project2
+      - Task 1
+      X Task 2
+
+   Withouth options, it adds a task to the todo file (see option -f). If a
+   string of format @project or +project is present in the task, the task
+   is filed under that project. For this to work, projects cannot contain
+   spaces. If no project specified, the task is filed under project
+   "INBOX". Matching is case insensitive.
+   
    If no arguments and options are specified, the contents of the todo
    file are shown
 
@@ -38,10 +51,19 @@ usage()
       as the todo file
    -d
       Show tasks with due date 
+   -c QUERY
+      Completes the task (replacing - with X) that matches QUERY. Only a
+      single task can match. Search is case sensitive
+
+AUTHOR
+       Written by Ronald Kaptein
+
+SEE ALSO
+      https://bitbucket.org/ronaldk/addtodo-cli
 EOF
 }
 
-while getopts “f:heda” OPTION
+while getopts “f:hedac:” OPTION
 do
    case $OPTION in
       f)
@@ -60,6 +82,9 @@ do
          ;;
       a)
          Archive=1;
+         ;;
+      c)
+         CompleteQuery=$OPTARG
          ;;
       ?)
          usage
@@ -90,7 +115,6 @@ if [ "$Archive" == "1" ]; then
    ArchiveDir=`dirname $File`
    ArchiveFile=`echo $ArchiveDir/done.md`
    Date=`date +%Y-%m-%d`
-   #Done=`grep -i "^[ ]*X.*" $File |sed -e "'s/^/$Date/'`
    Done=`sed -n "s/^[ ]*[xX][ ]*\(.*\)/$Date \1/p" $File `
    if [ "$Done" == "" ]; then
       echo No completed tasks found in $File
@@ -99,6 +123,28 @@ if [ "$Archive" == "1" ]; then
       echo "$Done" >> $ArchiveFile
       sed -i -e '/^[ ]*[xX][ ]*.*/d' $File
       echo "Moved $Count todo's to $ArchiveFile"
+   fi
+   exit
+fi
+
+if [ "$CompleteQuery" != "" ]; then
+   CompleteQuery=`echo "$CompleteQuery" `
+   SearchResult=`grep "$CompleteQuery" $File`
+   if [ "$SearchResult" == "" ]; then
+      echo Nothing found...
+   else
+      Count=`echo "$SearchResult" | wc -l`
+      if [ "$Count" -gt "1" ]; then
+         echo $Count matches found, please specify unique query
+      else
+         LineNumber=`grep -n "$CompleteQuery" $File | cut -d ":" -f 1`
+         sed -i "s/\([ ]*\)-\(.*\)\($CompleteQuery\)\(.*\)/\1X\2\3\4/g" $File
+         echo Replaced
+         echo "$SearchResult"
+         echo with
+         sed -n "s/\([ ]*\)X\(.*\)\($CompleteQuery\)\(.*\)/\1X\2\3\4/p" $File
+         echo on line $LineNumber
+      fi
    fi
    exit
 fi
