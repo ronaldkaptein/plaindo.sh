@@ -92,10 +92,14 @@ if [ "$Archive" == "1" ]; then
    Date=`date +%Y-%m-%d`
    #Done=`grep -i "^[ ]*X.*" $File |sed -e "'s/^/$Date/'`
    Done=`sed -n "s/^[ ]*[xX][ ]*\(.*\)/$Date \1/p" $File `
-   Count=`echo "$Done" | wc -l `
-   echo "$Done" >> $ArchiveFile
-   sed -i -e '/^[ ]*[xX][ ]*.*/d' $File
-   echo "Moved $Count todo's to $ArchiveFile"
+   if [ "$Done" == "" ]; then
+      echo No completed tasks found in $File
+   else
+      Count=`echo "$Done" | wc -l `
+      echo "$Done" >> $ArchiveFile
+      sed -i -e '/^[ ]*[xX][ ]*.*/d' $File
+      echo "Moved $Count todo's to $ArchiveFile"
+   fi
    exit
 fi
 
