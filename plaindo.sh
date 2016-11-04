@@ -10,7 +10,7 @@ usage()
 {
    cat << EOF
 SYNOPSIS
-   usage addtodo.sh [OPTIONS]  task
+   usage plaindo.sh [OPTIONS]  task
 
 DESCRIPTION
    Utility to interact with a plain text todo file via the command line. It
@@ -60,7 +60,7 @@ CREDITS & COPYRIGHTS
     This software is distributed under the GPLv3, see https://www.gnu.org/licenses/gpl-3.0.html
 
 SEE ALSO
-    https://bitbucket.org/ronaldk/addtodo-cli
+    https://bitbucket.org/ronaldk/plaindo-cli
 EOF
 }
 
