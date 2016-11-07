@@ -190,7 +190,9 @@ fi
 Task=$@
 
 if [ "$Task" == "" ]; then
-   cat $File
+   BoldText=`echo -e '\033[41m\033[37m'`
+   NormalText=`echo -e '\033[0m'`
+   sed "s/^\([ ]*[-xX] \)\(\*.*\)$/\1$BoldText\2$NormalText/g" $File
    NTodo=`grep "^[ ]*-[ ]*.*" $File | wc -l`
    NDone=`grep "^[ ]*[xX][ ]*.*" $File | wc -l`
    if [ "$NDone" == "0" ]; then
