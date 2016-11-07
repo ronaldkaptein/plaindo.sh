@@ -4,7 +4,8 @@
 File="~/todo.md"
 ShowDue=0
 Archive=0
-CompleteQuery=""
+CompleteQuery=0
+ToggleBold=0
 
 usage()
 {
@@ -40,6 +41,10 @@ DESCRIPTION
       Archive completed tasks, i.e. lines starting with X or x instead
       of -. Tasks are moved to file done.md in same directory as the
       todo file
+   -b
+      Toggle the bold status of the task that matches QUERY. Only a sinle task can match
+      Search is case sensitive. Task, excluding the leading -, is wrapped in *. If task is
+      already bold, both * are removed.
    -e
       Edit the file in vim
    -f TODO FILE
@@ -64,7 +69,7 @@ SEE ALSO
 EOF
 }
 
-while getopts “f:hedac:” OPTION
+while getopts “f:hedacb” OPTION
 do
    case $OPTION in
       f)
@@ -85,7 +90,10 @@ do
          Archive=1;
          ;;
       c)
-         CompleteQuery=$OPTARG
+         CompleteQuery=1
+         ;;
+      b)
+         ToggleBold=1
          ;;
       ?)
          usage
@@ -128,9 +136,10 @@ if [ "$Archive" == "1" ]; then
    exit
 fi
 
-if [ "$CompleteQuery" != "" ]; then
-   CompleteQuery=`echo "$CompleteQuery" `
-   SearchResult=`grep "$CompleteQuery" $File`
+if [ "$CompleteQuery" == "1" ]; then
+   Query=`echo "$@" `
+   echo Q $Query
+   SearchResult=`grep "$Query" $File`
    if [ "$SearchResult" == "" ]; then
       echo Nothing found...
    else
@@ -138,12 +147,40 @@ if [ "$CompleteQuery" != "" ]; then
       if [ "$Count" -gt "1" ]; then
          echo $Count matches found, please specify unique query
       else
-         LineNumber=`grep -n "$CompleteQuery" $File | cut -d ":" -f 1`
-         sed -i "s/\([ ]*\)-\(.*\)\($CompleteQuery\)\(.*\)/\1X\2\3\4/g" $File
+         LineNumber=`grep -n "$Query" $File | cut -d ":" -f 1`
+         sed -i "s/\([ ]*\)-\(.*\)\($Query\)\(.*\)/\1X\2\3\4/g" $File
          echo Replaced
          echo "$SearchResult"
          echo with
-         sed -n "s/\([ ]*\)X\(.*\)\($CompleteQuery\)\(.*\)/\1X\2\3\4/p" $File
+         sed -n "s/\([ ]*\)X\(.*\)\($Query\)\(.*\)/\1X\2\3\4/p" $File
+         echo on line $LineNumber
+      fi
+   fi
+   exit
+fi
+
+if [ "$ToggleBold" == "1" ]; then
+   Query=`echo "$@" `
+   SearchResult=`grep "$Query" $File`
+   if [ "$SearchResult" == "" ]; then
+      echo Nothing found...
+   else
+      Count=`echo "$SearchResult" | wc -l`
+      if [ "$Count" -gt "1" ]; then
+         echo $Count matches found, please specify unique query
+      else
+         LineNumber=`grep -n "$Query" $File | cut -d ":" -f 1`
+         #Check whether line is already bold:
+         BoldTest=`sed -n "/\([ ]*\)[-xX ] \*.*$Query.*\*[ ]*$/p" $File`
+         if [ "$BoldTest" == "" ]; then
+            sed -i "s/\([ ]*\)\([-xX] \)\(.*\)\($Query\)\(.*\)/\1\2*\3\4\5*/g" $File
+         else
+            sed -i "s/\([ ]*\)\([-xX] \)\*\(.*\)\($Query\)\(.*\)\*[ ]*/\1\2\3\4\5/g" $File
+         fi
+         echo Replaced
+         echo "$SearchResult"
+         echo with
+         sed -n "s/\([ ]*\)\([-xX] \)\(.*\)\($Query\)\(.*\)/\1\2\3\4\5/p" $File
          echo on line $LineNumber
       fi
    fi
