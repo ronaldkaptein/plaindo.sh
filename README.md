@@ -10,3 +10,7 @@ Just download `plaindo.sh` to your computer, and type `plaindo.sh -h` for more i
 #Documentation
 
 To do. For now, just use the help in `plaindo.sh`. 
+
+#To do
+
+See [TODO.md](TODO.md) for a list of things I may implement in the future 
