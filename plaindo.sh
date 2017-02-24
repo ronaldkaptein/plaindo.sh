@@ -116,7 +116,9 @@ if [ "$ShowDue" == "1" ];then
    echo "$DueTasks
              == OVERDUE ==
 $Today   == TODAY ==
-$Tomorrow   == FUTURE ==" | sort
+$Tomorrow   == FUTURE ==" | sort |
+sed 's/.*== TODAY ==.*/             == TODAY ==/g' | 
+sed 's/.*== FUTURE ==.*/             == TODAY ==/g'
    exit
 fi
 
