@@ -29,9 +29,12 @@ DESCRIPTION
 
    Withouth options, it adds a task to the todo file (see option -f). If a
    string of format @project or +project is present in the task, the task
-   is filed under that project. For this to work, projects cannot contain
-   spaces. If no project specified, the task is filed under project
-   "INBOX". Matching is case insensitive.
+   is filed under that project. If no project specified, the task is filed
+   under project "INBOX". Matching is case insensitive, and only first part of
+   project name needs to match. So if there is a project "# AABBCC" in the file,
+   +AA or @AA in the task will match that, as long as it's unique. Spaces in
+   project names in the file are allowed (e.g. "project 1 part 1"), but not when
+   adding a project to a task through the + or @ tag. So be careful with spaces.
    
    If no arguments and options are specified, the contents of the todo
    file are shown
@@ -233,9 +236,7 @@ else
    if [ "$Project" != "INBOX" ]; then
       Task=`echo $Task | sed -n "s/\(^.*\)\( $ProjectSymbol$Project\)\(.*\)/\1\3/p"`
    fi
+   Project=`grep -i -E "^#[ ]*$Project.*" $File`
    echo Adding to project \"$Project\": $Task
-   gawk -i inplace -v proj="$Project" -v task="   - $Task" 'BEGIN{IGNORECASE=1} $0 ~ proj { print; print task; next }1' $File
+   sed -i "s/^\($Project\)/\1\n   - $Task/i" $File > tmp.txt
 fi
-
-
-
