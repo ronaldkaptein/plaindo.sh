@@ -55,7 +55,7 @@ DESCRIPTION
       Archive done todo's (marked with X) to done.md in the same directory
       as the todo file
    -d
-      Show tasks with due date 
+      Show tasks with due date, i.e. have a tag due:YYYY-MM-DD
    -c QUERY
       Completes the task (replacing - with X) that matches QUERY. Only a
       single task can match. Search is case sensitive
