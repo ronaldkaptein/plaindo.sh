@@ -64,11 +64,11 @@ DESCRIPTION
       single task can match. Search is case sensitive
 
 CREDITS & COPYRIGHTS
-    Copyright (C) 2016 Ronald Kaptein
+    Copyright (C) 2016-2017 Ronald Kaptein
     This software is distributed under the GPLv3, see https://www.gnu.org/licenses/gpl-3.0.html
 
 SEE ALSO
-    https://bitbucket.org/ronaldk/plaindo-cli
+    https://github.com/ronaldkaptein/plaindo.sh
 EOF
 }
 
