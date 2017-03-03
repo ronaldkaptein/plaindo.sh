@@ -121,7 +121,7 @@ if [ "$ShowDue" == "1" ];then
 $Today   == TODAY ==
 $Tomorrow   == FUTURE ==" | sort |
 sed 's/.*== TODAY ==.*/             == TODAY ==/g' | 
-sed 's/.*== FUTURE ==.*/             == TODAY ==/g'
+sed 's/.*== FUTURE ==.*/             == FUTURE ==/g'
    exit
 fi
 
