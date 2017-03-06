@@ -96,6 +96,10 @@ function list()
 function complete()
 {
    Query=`echo "$@" `
+   if [[ "$Query" == ""  ]]; then
+      usage
+      exit
+   fi
    echo Q $Query
    SearchResult=`grep "$Query" $File`
    if [ "$SearchResult" == "" ]; then
@@ -135,6 +139,10 @@ function archive()
 function add()
 {
    Task=$@
+   if [[ "$Task" == ""  ]]; then
+      usage
+      exit
+   fi
    BackupFile=$File.bak
    cp $File $BackupFile
 
@@ -170,6 +178,10 @@ function add()
 function bold()
 {
    Query=`echo "$@" `
+   if [[ "$Query" == ""  ]]; then
+      usage
+      exit
+   fi
    SearchResult=`grep "$Query" $File`
    if [ "$SearchResult" == "" ]; then
       echo Nothing found...
@@ -216,7 +228,7 @@ $Tomorrow   == FUTURE ==" | sort |
 #MAIN
 
 
-while getopts “f:hedacb” OPTION
+while getopts “f:h” OPTION
 do
    case $OPTION in
       f)
@@ -225,22 +237,6 @@ do
       h)
          usage
          exit
-         ;;
-      e)
-         vim $File
-         exit
-         ;;
-      d)
-         ShowDue=1
-         ;;
-      a)
-         Archive=1;
-         ;;
-      c)
-         CompleteQuery=1
-         ;;
-      b)
-         ToggleBold=1
          ;;
       ?)
          usage
