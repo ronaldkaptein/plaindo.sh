@@ -5,6 +5,3 @@ A list of things I may want to implement in the future, also for my own referenc
 - Allow for replacing a todo
 - Allow to mark as done and re-enter
 - Allow for minimal terminal coloring/highlighting, e.g. only bold tasks
-
-IMPLEMENTED:
-- 161107: Allow for making tasks *bold* from the command line

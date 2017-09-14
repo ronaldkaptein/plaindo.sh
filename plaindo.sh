@@ -6,7 +6,8 @@ ShowDue=0
 Archive=0
 CompleteQuery=0
 ToggleBold=0
-DefaultNoArguments='list'
+DefaultAction='list'
+DefaultArguments=''
 PrintColor=1
 PrintTotals=0
 
@@ -88,11 +89,10 @@ function list()
    if [[ $PrintColor == 1 ]]; then
      BoldText=`echo -e '\033[41m\033[37m'`
      NormalText=`echo -e '\033[0m'`
+     sed "s/^\([ ]*[-xX] \)\(\*.*\)$/\1$BoldText\2$NormalText/g" $File
    else
-     BoldText=""
-     NormalText=""
+     cat $File
    fi
-   sed "s/^\([ ]*[-xX] \)\(\*.*\)$/\1$BoldText\2$NormalText/g" $File
    if [[ $PrintTotals == 1 ]]; then
      NTodo=`grep "^[ ]*-[ ]*.*" $File | wc -l`
      NDone=`grep "^[ ]*[xX][ ]*.*" $File | wc -l`
@@ -240,7 +240,6 @@ $Tomorrow   == FUTURE ==" | sort |
 
 #MAIN
 
-
 while getopts “f:hct” OPTION
 do
   case $OPTION in
@@ -265,15 +264,16 @@ do
 done
 shift $((OPTIND-1))
 
+
+
 if [[ "$1" == "" ]]; then
-   action=`echo $DefaultNoArguments | cut -d " " -f 1`
-   arguments=`echo $DefaultNoArguments | cut -d " " -f 2-`
+   action=$DefaultAction
+   arguments=$DefaultArguments
 else
    action=$1
    shift
    arguments=$*
 fi
-
 
 case $action in 
    showdue | due)
@@ -313,4 +313,5 @@ case $action in
       exit
       ;;
 esac
+
 exit
