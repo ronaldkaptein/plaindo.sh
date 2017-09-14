@@ -222,9 +222,8 @@ function bold()
 
 function showdue()
 {
-   DueTasks=`cat $File |grep due | sed 's/[ ]*\(.*\)due:\([0-9-]*\)\(.*\)/\2 \1 \3/g'`
-   N=`grep due: $File`
-   if [ "$N" == "" ]; then
+   DueTasks=`sed -n 's/[ ]*\(.*\)due:\([0-9-]*\)\(.*\)/\2 \1 \3/p' $File `
+   if [ -z $DueTasks ]; then
       echo No tasks with due date found
       exit
    fi
