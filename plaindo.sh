@@ -7,6 +7,8 @@ Archive=0
 CompleteQuery=0
 ToggleBold=0
 DefaultNoArguments='list'
+PrintColor=1
+PrintTotals=0
 
 usage()
 {
@@ -32,10 +34,14 @@ DESCRIPTION
    file are shown
 
    OPTIONS:
+   -c 
+      Do not use color/bold in output (slightly faster)
    -f TODO FILE
       Use a todo file other than the default ~/todo.md
    -h
       Show this help
+   -t 
+ Do not print totals when using list (slower)
  
    ACTIONS:
    archive
@@ -79,17 +85,24 @@ EOF
 
 function list()
 {
-   BoldText=`echo -e '\033[41m\033[37m'`
-   NormalText=`echo -e '\033[0m'`
-   sed "s/^\([ ]*[-xX] \)\(\*.*\)$/\1$BoldText\2$NormalText/g" $File
-   NTodo=`grep "^[ ]*-[ ]*.*" $File | wc -l`
-   NDone=`grep "^[ ]*[xX][ ]*.*" $File | wc -l`
-   if [ "$NDone" == "0" ]; then
-      echo "$NTodo active tasks"
-   elif [ "$NDone" == "1" ]; then
-      echo "$NTodo active tasks and $NDone done task (use -a to archive)"
+   if [[ $PrintColor == 1 ]]; then
+     BoldText=`echo -e '\033[41m\033[37m'`
+     NormalText=`echo -e '\033[0m'`
    else
-      echo "$NTodo active tasks and $NDone done tasks (use -a to archive)"
+     BoldText=""
+     NormalText=""
+   fi
+   sed "s/^\([ ]*[-xX] \)\(\*.*\)$/\1$BoldText\2$NormalText/g" $File
+   if [[ $PrintTotals == 1 ]]; then
+     NTodo=`grep "^[ ]*-[ ]*.*" $File | wc -l`
+     NDone=`grep "^[ ]*[xX][ ]*.*" $File | wc -l`
+     if [ "$NDone" == "0" ]; then
+       echo "$NTodo active tasks"
+     elif [ "$NDone" == "1" ]; then
+       echo "$NTodo active tasks and $NDone done task (use -a to archive)"
+     else
+       echo "$NTodo active tasks and $NDone done tasks (use -a to archive)"
+     fi
    fi
 }
 
@@ -228,21 +241,27 @@ $Tomorrow   == FUTURE ==" | sort |
 #MAIN
 
 
-while getopts “f:h” OPTION
+while getopts “f:hct” OPTION
 do
-   case $OPTION in
-      f)
-         File=$OPTARG
-         ;;
-      h)
-         usage
-         exit
-         ;;
-      ?)
-         usage
-         exit
-         ;;
-   esac
+  case $OPTION in
+    f)
+      File=$OPTARG
+      ;;
+    h)
+      usage
+      exit
+      ;;
+    c)
+      PrintColor=0
+      ;;
+    t)
+      PrintTotals=1
+      ;;
+    ?)
+      usage
+      exit
+      ;;
+  esac
 done
 shift $((OPTIND-1))
 
@@ -285,7 +304,7 @@ case $action in
         vim $File
      exit
      ;;
-    help )
+    help|h )
        usage
        exit
        ;;
