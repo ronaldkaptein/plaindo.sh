@@ -92,11 +92,15 @@ EOF
 function list()
 {
   if [[ $PrintColor == 1 ]]; then
-    BoldText=`echo -e '\e[44m'`
+    PrioText=`echo -e '\e[44m'`
     DoneText=`echo -e '\e[0;35m'`
+    WaitText=`echo -e '\e[0;31m'`
     TitleText=`echo -e '\e[4;33m'`
     NormalText=`echo -e '\e[0m'`
-    cat $File | sed "s/^\([ ]*\[!\] \)\(.*\)$/\1$BoldText\2$NormalText/g" | sed "s/^\([ ]*\[[xX]\] .*\)$/$DoneText\1$NormalText/g" | sed "s/^\([ ]*[#].*\)$/$TitleText\1$NormalText/g"
+    cat $File | sed "s/^\([ ]*\[!\] \)\(.*\)$/\1$PrioText\2$NormalText/g" | 
+      sed "s/^\([ ]*\[[xX]\] .*\)$/$DoneText\1$NormalText/g" | 
+      sed "s/^\([ ]*\[[wW]\] .*\)$/$WaitText\1$NormalText/g" | 
+      sed "s/^\([ ]*[#].*\)$/$TitleText\1$NormalText/g"
   else
     cat $File
   fi
@@ -109,33 +113,6 @@ function list()
       echo "$NTodo active tasks and $NDone done task (use archive to remove)"
     else
       echo "$NTodo active tasks and $NDone done tasks (use archive to remove)"
-    fi
-  fi
-}
-
-function complete()
-{
-  Query=`echo "$@" `
-  if [[ "$Query" == ""  ]]; then
-    usage
-    exit
-  fi
-  echo Q $Query
-  SearchResult=`grep "$Query" $File`
-  if [ "$SearchResult" == "" ]; then
-    echo Nothing found...
-  else
-    Count=`echo "$SearchResult" | wc -l`
-    if [ "$Count" -gt "1" ]; then
-      echo $Count matches found, please specify unique query
-    else
-      LineNumber=`grep -n "$Query" $File | cut -d ":" -f 1`
-      sed -i "s/\([ ]*\)\[.*\]\(.*\)\($Query\)\(.*\)/\1[x]\2\3\4/g" $File
-      echo Replaced
-      echo "$SearchResult"
-      echo with
-      sed -n "s/\([ ]*\)\[.*\]\(.*\)\($Query\)\(.*\)/\1[x]\2\3\4/p" $File
-      echo on line $LineNumber
     fi
   fi
 }
@@ -220,16 +197,6 @@ function changeStatus()
       echo $Count matches found, please specify unique query
     else
       LineNumber=`grep -n "$Query" $File | cut -d ":" -f 1`
-      #Check whether line has other status
-      StatusTest=`sed -n "/\([ ]*\)\[.\] .*$Query.*$/p" $File`
-      if [ ! "$StatusTest" == "" ] && [ ! "$NewStatus" == "" ]; then
-        echo line has other status, remove that first
-        exit
-      fi
-      if [ "$StatusTest" == "" ] && [ "$NewStatus" == "" ]; then
-        echo line has no status, nothing to clear
-        exit
-      fi
       #Check whether line has status already
       StatusTest=`sed -n "/\([ ]*\)\[$NewStatus\] .*$Query.*[ ]*$/p" $File`
       if [ "$StatusTest" == "" ]; then #Add status
@@ -330,7 +297,7 @@ case $action in
     exit
     ;;
   do|d )
-    complete $arguments
+    changeStatus x $arguments
     exit
     ;;
   archive)
