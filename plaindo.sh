@@ -62,10 +62,10 @@ DESCRIPTION
       +AA, @AA and +BB in the task will match that, as long as it's unique. Spaces in
       project names in the file are allowed (e.g. "project 1 part 1"), but not when
       adding a project to a task through the + or @ tag. So be careful with spaces.
-   prio| p QUERY
-      Toggle the priority of the task that matches QUERY, replacing [] with [!].
+   prio1 | p1 | prio2 | p2 | prio3 | p3 QUERY
+      Toggle priority 1,2 or 3 of the task that matches QUERY, using [1], [2] or [3]
    wait| w QUERY
-      Toggle the wait status of the task that matches QUERY, replacing [] with [w].
+      Toggle the waiting for status of the task that matches QUERY, replacing [] with [w].
    clear| c QUERY
       Removes the status of the task that matches QUERY, replacing [*] with []
    status| s STATUS QUERY
@@ -92,14 +92,15 @@ EOF
 function list()
 {
   if [[ $PrintColor == 1 ]]; then
-    PrioText=`echo -e '\e[44m'`
+    #PrioText=`echo -e '\e[44m'`
+    PrioText=`echo -e '\e[0;34m'`
     DoneText=`echo -e '\e[0;35m'`
-    WaitText=`echo -e '\e[0;31m'`
+    LowPrioText=`echo -e '\e[0;31m'`
     TitleText=`echo -e '\e[4;33m'`
     NormalText=`echo -e '\e[0m'`
-    cat $File | sed "s/^\([ ]*\[!\] \)\(.*\)$/\1$PrioText\2$NormalText/g" | 
+    cat $File | sed "s/^\([ ]*\[1\]\)\(.*\)$/\1$PrioText\2$NormalText/g" | 
       sed "s/^\([ ]*\[[xX]\] .*\)$/$DoneText\1$NormalText/g" | 
-      sed "s/^\([ ]*\[[wW]\] .*\)$/$WaitText\1$NormalText/g" | 
+      sed "s/^\([ ]*\[[wW3]\] .*\)$/$LowPrioText\1$NormalText/g" | 
       sed "s/^\([ ]*[#].*\)$/$TitleText\1$NormalText/g"
   else
     cat $File
@@ -280,8 +281,16 @@ case $action in
     add $arguments
     exit
     ;;
-  prio | p)
-    changeStatus ! $arguments
+  prio1 | p1)
+    changeStatus 1 $arguments
+    exit
+    ;;
+  prio2 | p2)
+    changeStatus 2 $arguments
+    exit
+    ;;
+  prio3 | p3)
+    changeStatus 3 $arguments
     exit
     ;;
   wait | w)
