@@ -87,9 +87,11 @@ EOF
 function list()
 {
    if [[ $PrintColor == 1 ]]; then
-     BoldText=`echo -e '\033[41m\033[37m'`
-     NormalText=`echo -e '\033[0m'`
-     sed "s/^\([ ]*[-xX] \)\(\*.*\)$/\1$BoldText\2$NormalText/g" $File
+     BoldText=`echo -e '\e[44m'`
+     DoneText=`echo -e '\e[0;35m'`
+     TitleText=`echo -e '\e[4;33m'`
+     NormalText=`echo -e '\e[0m'`
+     cat $File | sed "s/^\([ ]*[-xX] \)\(\*.*\)$/\1$BoldText\2$NormalText/g" | sed "s/^\([ ]*[xX] .*\)$/$DoneText\1$NormalText/g" | sed "s/^\([ ]*[#].*\)$/$TitleText\1$NormalText/g"
    else
      cat $File
    fi
