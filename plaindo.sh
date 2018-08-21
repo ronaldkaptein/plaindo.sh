@@ -13,7 +13,7 @@ PrintTotals=0
 
 usage()
 {
-   cat << EOF
+   less << EOF
 SYNOPSIS
    usage plaindo.sh [OPTIONS] ACTION [ARGUMENTS]
 
@@ -42,7 +42,8 @@ DESCRIPTION
    -h
       Show this help
    -t 
- Do not print totals when using list (slower)
+      Print totals when using list (slower)
+
  
    ACTIONS:
    archive
@@ -56,9 +57,9 @@ DESCRIPTION
       Adds TASK to the todo file (see option -f). If a
       string of format @project or +project is present in the task, the task
       is filed under that project. If no project specified, the task is filed
-      under project "INBOX". Matching is case insensitive, and only first part of
-      project name needs to match. So if there is a project "# AABBCC" in the file,
-      +AA or @AA in the task will match that, as long as it's unique. Spaces in
+      under project "INBOX". Matching is case insensitive, and only part of
+      project name needs to match. So if there is a project "# AA BB CC" in the file,
+      +AA, @AA and +BB in the task will match that, as long as it's unique. Spaces in
       project names in the file are allowed (e.g. "project 1 part 1"), but not when
       adding a project to a task through the + or @ tag. So be careful with spaces.
    bold | b QUERY
@@ -76,7 +77,7 @@ DESCRIPTION
     
 
 CREDITS & COPYRIGHTS
-    Copyright (C) 2016-2017 Ronald Kaptein
+    Copyright (C) 2016-2018 Ronald Kaptein
     This software is distributed under the GPLv3, see https://www.gnu.org/licenses/gpl-3.0.html
 
 SEE ALSO
@@ -101,9 +102,9 @@ function list()
      if [ "$NDone" == "0" ]; then
        echo "$NTodo active tasks"
      elif [ "$NDone" == "1" ]; then
-       echo "$NTodo active tasks and $NDone done task (use -a to archive)"
+       echo "$NTodo active tasks and $NDone done task (use archive to remove)"
      else
-       echo "$NTodo active tasks and $NDone done tasks (use -a to archive)"
+       echo "$NTodo active tasks and $NDone done tasks (use archive to remove)"
      fi
    fi
 }
@@ -160,6 +161,8 @@ function add()
    fi
    BackupFile=$File.bak
    cp $File $BackupFile
+   
+   echo $Task
 
    ProjectSymbol="@"
    Project=`echo $@ | sed -n 's/^.*@\([^ ]*\).*$/\1/p'`
@@ -173,20 +176,21 @@ function add()
       Project="INBOX"
    fi
 
-   Count=`grep -i -E "^#[ ]*$Project" $File | wc -l`
+   Count=`grep -i -E "^#[ ]*.*$Project.*" $File | wc -l`
    if [ "$Count" -eq "0" ]; then
       echo "Project \"$Project\" not found, please add it to $File first"
       exit
    elif [ "$Count" -gt "1" ]; then
-      echo "Multiple matches for project \"$Project\", please fix in $File"
+      echo "Multiple matches for \"$Project\", please specify unique query"
       exit
    else
-      if [ "$Project" != "INBOX" ]; then
-         Task=`echo $Task | sed -n "s/\(^.*\)\( $ProjectSymbol$Project\)\(.*\)/\1\3/p"`
-      fi
-      Project=`grep -i -E "^#[ ]*$Project.*" $File`
-      echo Adding to project \"$Project\": $Task
-      sed -i "s/^\($Project\)/\1\n   - $Task/i" $File > tmp.txt
+     ActualProject=`grep -i -E "^#[ ]*.*$Project.*" $File | sed 's/^#[ ]*\(.*\)$/\1/g'` 
+     if [ "$ActualProject" != "INBOX" ]; then
+       Task=`echo $Task | sed -n "s/\(^.*\)\($ProjectSymbol$Project\)\(.*\)/\1\3/p" | sed "s/  */ /g" | sed "s/^[ ]*//g"`
+     fi
+     echo Adding to project \"$ActualProject\": $Task
+     ProjectLine=`grep -i -E "^#[ ]*.*$Project.*" $File`
+     sed -i "s/^\($ProjectLine\)/\1\n   - $Task/i" $File > tmp.txt
    fi
 }
 
