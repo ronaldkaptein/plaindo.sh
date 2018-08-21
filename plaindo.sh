@@ -93,14 +93,16 @@ function list()
 {
   if [[ $PrintColor == 1 ]]; then
     #PrioText=`echo -e '\e[44m'`
-    PrioText=`echo -e '\e[0;34m'`
+    HighPrioText=`echo -e '\e[0;34m'`
     DoneText=`echo -e '\e[0;35m'`
     LowPrioText=`echo -e '\e[0;31m'`
+    Prio2Text=`echo -e '\e[0;36m'`
     TitleText=`echo -e '\e[4;33m'`
     NormalText=`echo -e '\e[0m'`
-    cat $File | sed "s/^\([ ]*\[1\]\)\(.*\)$/\1$PrioText\2$NormalText/g" | 
+    cat $File | sed "s/^\([ ]*\[1\].*\)$/$HighPrioText\1$NormalText/g" | 
       sed "s/^\([ ]*\[[xX]\] .*\)$/$DoneText\1$NormalText/g" | 
       sed "s/^\([ ]*\[[wW3]\] .*\)$/$LowPrioText\1$NormalText/g" | 
+      sed "s/^\([ ]*\[2\] .*\)$/$Prio2Text\1$NormalText/g" | 
       sed "s/^\([ ]*[#].*\)$/$TitleText\1$NormalText/g"
   else
     cat $File
@@ -170,7 +172,7 @@ function add()
     fi
     echo Adding to project \"$ActualProject\": $Task
     ProjectLine=`grep -i -E "^#[ ]*.*$Project.*" $File`
-    sed -i "s/^\($ProjectLine\)/\1\n   [] $Task/i" $File > tmp.txt
+    sed -i "s/^\($ProjectLine\)/\1\n   [] $Task/i" $File
   fi
 }
 
