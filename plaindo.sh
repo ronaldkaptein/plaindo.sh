@@ -13,7 +13,7 @@ PrintTotals=0
 
 usage()
 {
-   less << EOF
+  less << EOF
 SYNOPSIS
    usage plaindo.sh [OPTIONS] ACTION [ARGUMENTS]
 
@@ -25,18 +25,18 @@ DESCRIPTION
    The plain-text todo file is assumed to have the format:
 
    # Project1
-      - Task 1
-      - Task 2
+      [] Task 1
+      [] Task 2
    # Project2
-      - Task 1
-      X Task 2
+      [] Task 1
+      [x] Task 2
 
    If no arguments and options are specified, the contents of the todo
    file are shown
 
    OPTIONS:
    -c 
-      Do not use color/bold in output (slightly faster)
+ Do not use color/bold in output (slightly faster)
    -f TODO FILE
       Use a todo file other than the default ~/todo.md
    -h
@@ -44,13 +44,13 @@ DESCRIPTION
    -t 
       Print totals when using list (slower)
 
- 
+
    ACTIONS:
    archive
       Archive completed tasks, i.e. lines starting with X or x instead
       of -. Tasks are moved to file done.md in same directory as the
       todo file
-   do QUERY
+    do QUERY
       Completes the task (replacing - with X) that matches QUERY. Only a
       single task can match. Search is case sensitive
    add|a TASK
@@ -62,10 +62,14 @@ DESCRIPTION
       +AA, @AA and +BB in the task will match that, as long as it's unique. Spaces in
       project names in the file are allowed (e.g. "project 1 part 1"), but not when
       adding a project to a task through the + or @ tag. So be careful with spaces.
-   bold | b QUERY
-      Toggle the bold status of the task that matches QUERY. Only a sinle task can match
-      Search is case sensitive. Task, excluding the leading -, is wrapped in *. If task is
-      already bold, both * are removed.
+   prio| p QUERY
+      Toggle the priority of the task that matches QUERY, replacing [] with [!].
+   wait| w QUERY
+      Toggle the wait status of the task that matches QUERY, replacing [] with [w].
+   clear| c QUERY
+      Removes the status of the task that matches QUERY, replacing [*] with []
+   status| s STATUS QUERY
+      Toggle the status of the task that matches QUERY, replacing [] with [STATUS].
    edit | e
       Edit the file in vim
    showdue | due
@@ -74,7 +78,7 @@ DESCRIPTION
       Show the content of the todo file
    help
       show help
-    
+
 
 CREDITS & COPYRIGHTS
     Copyright (C) 2016-2018 Ronald Kaptein
@@ -87,160 +91,176 @@ EOF
 
 function list()
 {
-   if [[ $PrintColor == 1 ]]; then
-     BoldText=`echo -e '\e[44m'`
-     DoneText=`echo -e '\e[0;35m'`
-     TitleText=`echo -e '\e[4;33m'`
-     NormalText=`echo -e '\e[0m'`
-     cat $File | sed "s/^\([ ]*[-xX] \)\(\*.*\)$/\1$BoldText\2$NormalText/g" | sed "s/^\([ ]*[xX] .*\)$/$DoneText\1$NormalText/g" | sed "s/^\([ ]*[#].*\)$/$TitleText\1$NormalText/g"
-   else
-     cat $File
-   fi
-   if [[ $PrintTotals == 1 ]]; then
-     NTodo=`grep "^[ ]*-[ ]*.*" $File | wc -l`
-     NDone=`grep "^[ ]*[xX][ ]*.*" $File | wc -l`
-     if [ "$NDone" == "0" ]; then
-       echo "$NTodo active tasks"
-     elif [ "$NDone" == "1" ]; then
-       echo "$NTodo active tasks and $NDone done task (use archive to remove)"
-     else
-       echo "$NTodo active tasks and $NDone done tasks (use archive to remove)"
-     fi
-   fi
+  if [[ $PrintColor == 1 ]]; then
+    BoldText=`echo -e '\e[44m'`
+    DoneText=`echo -e '\e[0;35m'`
+    TitleText=`echo -e '\e[4;33m'`
+    NormalText=`echo -e '\e[0m'`
+    cat $File | sed "s/^\([ ]*\[!\] \)\(.*\)$/\1$BoldText\2$NormalText/g" | sed "s/^\([ ]*\[[xX]\] .*\)$/$DoneText\1$NormalText/g" | sed "s/^\([ ]*[#].*\)$/$TitleText\1$NormalText/g"
+  else
+    cat $File
+  fi
+  if [[ $PrintTotals == 1 ]]; then
+    NTodo=`grep "^[ ]*\[[-xX]*\][ ]*.*" $File | wc -l`
+    NDone=`grep "^[ ]*\[[xX]\][ ]*.*" $File | wc -l`
+    if [ "$NDone" == "0" ]; then
+      echo "$NTodo active tasks"
+    elif [ "$NDone" == "1" ]; then
+      echo "$NTodo active tasks and $NDone done task (use archive to remove)"
+    else
+      echo "$NTodo active tasks and $NDone done tasks (use archive to remove)"
+    fi
+  fi
 }
 
 function complete()
 {
-   Query=`echo "$@" `
-   if [[ "$Query" == ""  ]]; then
-      usage
-      exit
-   fi
-   echo Q $Query
-   SearchResult=`grep "$Query" $File`
-   if [ "$SearchResult" == "" ]; then
-      echo Nothing found...
-   else
-      Count=`echo "$SearchResult" | wc -l`
-      if [ "$Count" -gt "1" ]; then
-         echo $Count matches found, please specify unique query
-      else
-         LineNumber=`grep -n "$Query" $File | cut -d ":" -f 1`
-         sed -i "s/\([ ]*\)-\(.*\)\($Query\)\(.*\)/\1X\2\3\4/g" $File
-         echo Replaced
-         echo "$SearchResult"
-         echo with
-         sed -n "s/\([ ]*\)X\(.*\)\($Query\)\(.*\)/\1X\2\3\4/p" $File
-         echo on line $LineNumber
-      fi
-   fi
+  Query=`echo "$@" `
+  if [[ "$Query" == ""  ]]; then
+    usage
+    exit
+  fi
+  echo Q $Query
+  SearchResult=`grep "$Query" $File`
+  if [ "$SearchResult" == "" ]; then
+    echo Nothing found...
+  else
+    Count=`echo "$SearchResult" | wc -l`
+    if [ "$Count" -gt "1" ]; then
+      echo $Count matches found, please specify unique query
+    else
+      LineNumber=`grep -n "$Query" $File | cut -d ":" -f 1`
+      sed -i "s/\([ ]*\)\[.*\]\(.*\)\($Query\)\(.*\)/\1[x]\2\3\4/g" $File
+      echo Replaced
+      echo "$SearchResult"
+      echo with
+      sed -n "s/\([ ]*\)\[.*\]\(.*\)\($Query\)\(.*\)/\1[x]\2\3\4/p" $File
+      echo on line $LineNumber
+    fi
+  fi
 }
 
 function archive()
 {
-   ArchiveDir=`dirname $File`
-   ArchiveFile=`echo $ArchiveDir/done.md`
-   Date=`date +%Y-%m-%d`
-   Done=`sed -n "s/^[ ]*[xX][ ]*\(.*\)/$Date \1/p" $File `
-   if [ "$Done" == "" ]; then
-      echo No completed tasks found in $File
-   else
-      Count=`echo "$Done" | wc -l `
-      echo "$Done" >> $ArchiveFile
-      sed -i -e '/^[ ]*[xX][ ]*.*/d' $File
-      echo "Moved $Count todo's to $ArchiveFile"
-   fi
+  ArchiveDir=`dirname $File`
+  ArchiveFile=`echo $ArchiveDir/done.md`
+  Date=`date +%Y-%m-%d`
+Done=`sed -n "s/^[ ]*\[[xX]\][ ]*\(.*\)/$Date \1/p" $File `
+if [ "$Done" == "" ]; then
+  echo No completed tasks found in $File
+else
+  Count=`echo "$Done" | wc -l `
+  echo "$Done" >> $ArchiveFile
+  sed -i -e '/^[ ]*\[[xX]\][ ]*.*/d' $File
+  echo "Moved $Count todo's to $ArchiveFile"
+fi
 }
 
 function add()
 {
-   Task=$@
-   if [[ "$Task" == ""  ]]; then
-      usage
-      exit
-   fi
-   BackupFile=$File.bak
-   cp $File $BackupFile
-   
-   echo $Task
+  Task=$@
+  if [[ "$Task" == ""  ]]; then
+    usage
+    exit
+  fi
+  BackupFile=$File.bak
+  cp $File $BackupFile
 
-   ProjectSymbol="@"
-   Project=`echo $@ | sed -n 's/^.*@\([^ ]*\).*$/\1/p'`
-   if [ "$Project" == "" ]; then
-      ProjectSymbol="+"
-      Project=`echo $@ | sed -n 's/^.*+\([^ ]*\).*$/\1/p'`
-   fi
+  ProjectSymbol="@"
+  Project=`echo $@ | sed -n 's/^.*@\([^ ]*\).*$/\1/p'`
+  if [ "$Project" == "" ]; then
+    ProjectSymbol="+"
+    Project=`echo $@ | sed -n 's/^.*+\([^ ]*\).*$/\1/p'`
+  fi
 
-   if [ "$Project" == "" ]; then
-      ProjectSymbol=""
-      Project="INBOX"
-   fi
+  if [ "$Project" == "" ]; then
+    ProjectSymbol=""
+    Project="INBOX"
+  fi
 
-   Count=`grep -i -E "^#[ ]*.*$Project.*" $File | wc -l`
-   if [ "$Count" -eq "0" ]; then
-      echo "Project \"$Project\" not found, please add it to $File first"
-      exit
-   elif [ "$Count" -gt "1" ]; then
-      echo "Multiple matches for \"$Project\", please specify unique query"
-      exit
-   else
-     ActualProject=`grep -i -E "^#[ ]*.*$Project.*" $File | sed 's/^#[ ]*\(.*\)$/\1/g'` 
-     if [ "$ActualProject" != "INBOX" ]; then
-       Task=`echo $Task | sed -n "s/\(^.*\)\($ProjectSymbol$Project\)\(.*\)/\1\3/p" | sed "s/  */ /g" | sed "s/^[ ]*//g"`
-     fi
-     echo Adding to project \"$ActualProject\": $Task
-     ProjectLine=`grep -i -E "^#[ ]*.*$Project.*" $File`
-     sed -i "s/^\($ProjectLine\)/\1\n   - $Task/i" $File > tmp.txt
-   fi
+  Count=`grep -i -E "^#[ ]*.*$Project.*" $File | wc -l`
+  if [ "$Count" -eq "0" ]; then
+    echo "Project \"$Project\" not found, please add it to $File first"
+    exit
+  elif [ "$Count" -gt "1" ]; then
+    echo "Multiple matches for \"$Project\", please specify unique query"
+    exit
+  else
+    ActualProject=`grep -i -E "^#[ ]*.*$Project.*" $File | sed 's/^#[ ]*\(.*\)$/\1/g'` 
+    if [ "$ActualProject" != "INBOX" ]; then
+      Task=`echo $Task | sed -n "s/\(^.*\)\($ProjectSymbol$Project\)\(.*\)/\1\3/p" | sed "s/  */ /g" | sed "s/^[ ]*//g"`
+    fi
+    echo Adding to project \"$ActualProject\": $Task
+    ProjectLine=`grep -i -E "^#[ ]*.*$Project.*" $File`
+    sed -i "s/^\($ProjectLine\)/\1\n   [] $Task/i" $File > tmp.txt
+  fi
 }
 
-function bold()
+function changeStatus()
 {
-   Query=`echo "$@" `
-   if [[ "$Query" == ""  ]]; then
-      usage
-      exit
-   fi
-   SearchResult=`grep "$Query" $File`
-   if [ "$SearchResult" == "" ]; then
-      echo Nothing found...
-   else
-      Count=`echo "$SearchResult" | wc -l`
-      if [ "$Count" -gt "1" ]; then
-         echo $Count matches found, please specify unique query
-      else
-         LineNumber=`grep -n "$Query" $File | cut -d ":" -f 1`
-         #Check whether line is already bold:
-         BoldTest=`sed -n "/\([ ]*\)[-xX ] \*.*$Query.*\*[ ]*$/p" $File`
-         if [ "$BoldTest" == "" ]; then
-            sed -i "s/\([ ]*\)\([-xX] \)\(.*\)\($Query\)\(.*\)/\1\2*\3\4\5*/g" $File
-         else
-            sed -i "s/\([ ]*\)\([-xX] \)\*\(.*\)\($Query\)\(.*\)\*[ ]*/\1\2\3\4\5/g" $File
-         fi
-         echo Replaced
-         echo "$SearchResult"
-         echo with
-         sed -n "s/\([ ]*\)\([-xX] \)\(.*\)\($Query\)\(.*\)/\1\2\3\4\5/p" $File
-         echo on line $LineNumber
+  NewStatus=`echo "$1" `
+  shift
+  Query=`echo "$@" `
+
+  if [[ "$NewStatus" == "CLEAR" ]]; then
+    NewStatus=""
+  fi
+
+  if [[ "$Query" == ""  ]]; then
+    usage
+    exit
+  fi
+
+  SearchResult=`grep "$Query" $File`
+  if [ "$SearchResult" == "" ]; then
+    echo Nothing found...
+  else
+    Count=`echo "$SearchResult" | wc -l`
+    if [ "$Count" -gt "1" ]; then
+      echo $Count matches found, please specify unique query
+    else
+      LineNumber=`grep -n "$Query" $File | cut -d ":" -f 1`
+      #Check whether line has other status
+      StatusTest=`sed -n "/\([ ]*\)\[.\] .*$Query.*$/p" $File`
+      if [ ! "$StatusTest" == "" ] && [ ! "$NewStatus" == "" ]; then
+        echo line has other status, remove that first
+        exit
       fi
-   fi
+      if [ "$StatusTest" == "" ] && [ "$NewStatus" == "" ]; then
+        echo line has no status, nothing to clear
+        exit
+      fi
+      #Check whether line has status already
+      StatusTest=`sed -n "/\([ ]*\)\[$NewStatus\] .*$Query.*[ ]*$/p" $File`
+      if [ "$StatusTest" == "" ]; then #Add status
+        sed -i "s/\([ ]*\)\(\[.*\]\)\(.*\)\($Query\)\(.*\)/\1[$NewStatus]\3\4\5/g" $File
+      else
+        sed -i "s/\([ ]*\)\(\[$NewStatus\]\)\(.*\)\($Query\)\(.*\)[ ]*/\1[]\3\4\5/g" $File
+      fi
+      echo Replaced
+      echo "$SearchResult"
+      echo with
+      sed -n "s/\([ ]*\)\(\[.*\]\)\(.*\)\($Query\)\(.*\)/\1\2\3\4\5/p" $File
+      echo on line $LineNumber
+    fi
+  fi
 }
 
 function showdue()
 {
-   DueTasks=`sed -n 's/[ ]*\(.*\)due:\([0-9-]*\)\(.*\)/\2 \1 \3/p' $File `
-   if [ -z $DueTasks ]; then
-      echo No tasks with due date found
-      exit
-   fi
-   Today=`date +%Y-%m-%d`
-   Tomorrow=`date -d '+1 day' +%Y-%m-%d`
-   echo "$DueTasks
-             == OVERDUE ==
-$Today   == TODAY ==
-$Tomorrow   == FUTURE ==" | sort |
-   sed 's/.*== TODAY ==.*/             == TODAY ==/g' | 
-   sed 's/.*== FUTURE ==.*/             == FUTURE ==/g'
+  DueTasks=`sed -n 's/[ ]*\(.*\)due:\([0-9-]*\)\(.*\)/\2 \1 \3/p' $File `
+  if [ -z $DueTasks ]; then
+    echo No tasks with due date found
+    exit
+  fi
+  Today=`date +%Y-%m-%d`
+  Tomorrow=`date -d '+1 day' +%Y-%m-%d`
+  echo "$DueTasks
+  == OVERDUE ==
+  $Today   == TODAY ==
+  $Tomorrow   == FUTURE ==" | sort |
+    sed 's/.*== TODAY ==.*/             == TODAY ==/g' | 
+    sed 's/.*== FUTURE ==.*/             == FUTURE ==/g'
 }
 
 #MAIN
@@ -272,51 +292,63 @@ shift $((OPTIND-1))
 
 
 if [[ "$1" == "" ]]; then
-   action=$DefaultAction
-   arguments=$DefaultArguments
+  action=$DefaultAction
+  arguments=$DefaultArguments
 else
-   action=$1
-   shift
-   arguments=$*
+  action=$1
+  shift
+  arguments=$*
 fi
 
 case $action in 
-   showdue | due)
-       showdue $arguments
-       exit
-       ;;
-   list | ls)
-       list $arguments
-       exit
-       ;;
-   add | a)
-       add $arguments
-       exit
-       ;;
-   bold | b)
-       bold $arguments
-       exit
-       ;;
-    do|d )
-       complete $arguments
-       exit
-       ;;
-    archive)
-       archive $arguments
-       exit
-       ;;
-    edit | e )
-        vim $File
-     exit
-     ;;
-    help|h )
-       usage
-       exit
-       ;;
-   *)
-      echo unknown action $action
-      exit
-      ;;
+  showdue | due)
+    showdue $arguments
+    exit
+    ;;
+  list | ls)
+    list $arguments
+    exit
+    ;;
+  add | a)
+    add $arguments
+    exit
+    ;;
+  prio | p)
+    changeStatus ! $arguments
+    exit
+    ;;
+  wait | w)
+    changeStatus w $arguments
+    exit
+    ;;
+  clear | c)
+    changeStatus CLEAR $arguments
+    exit
+    ;;
+  status | s)
+    changeStatus $arguments
+    exit
+    ;;
+  do|d )
+    complete $arguments
+    exit
+    ;;
+  archive)
+    archive $arguments
+    exit
+    ;;
+  edit | e )
+    vim $File
+    exit
+    ;;
+  help|h )
+    usage
+    exit
+    ;;
+  *)
+    echo unknown action $action
+    exit
+    ;;
 esac
 
 exit
