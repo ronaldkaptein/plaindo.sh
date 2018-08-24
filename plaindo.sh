@@ -74,8 +74,9 @@ DESCRIPTION
       Edit the file in vim
    showdue | due
       Show tasks with due date, i.e. have a tag due:YYYY-MM-DD
-   list | ls
-      Show the content of the todo file
+   list | ls QUERY
+      Show the content of the todo file. If QUERY is specified, only the tasks specifying
+      QUERY are shown (projects are always shown)
    help
       show help
 
@@ -91,25 +92,31 @@ EOF
 
 function list()
 {
+  Search=$@
+  if [[ "$Search" == ""  ]]; then
+    Text=`cat $File`
+  else
+    Text=`fgrep -h -e "$Search" -e "# " $File`
+  fi
+
   if [[ $PrintColor == 1 ]]; then
-    #PrioText=`echo -e '\e[44m'`
     HighPrioText=`echo -e '\e[0;34m'`
     DoneText=`echo -e '\e[0;35m'`
     LowPrioText=`echo -e '\e[0;31m'`
     Prio2Text=`echo -e '\e[0;36m'`
     TitleText=`echo -e '\e[4;33m'`
     NormalText=`echo -e '\e[0m'`
-    cat $File | sed "s/^\([ ]*\[1\].*\)$/$HighPrioText\1$NormalText/g" | 
+    echo "$Text" | sed "s/^\([ ]*\[1\].*\)$/$HighPrioText\1$NormalText/g" | 
       sed "s/^\([ ]*\[[xX]\] .*\)$/$DoneText\1$NormalText/g" | 
       sed "s/^\([ ]*\[[wW3]\] .*\)$/$LowPrioText\1$NormalText/g" | 
       sed "s/^\([ ]*\[2\] .*\)$/$Prio2Text\1$NormalText/g" | 
       sed "s/^\([ ]*[#].*\)$/$TitleText\1$NormalText/g"
   else
-    cat $File
+     echo "$Text"
   fi
   if [[ $PrintTotals == 1 ]]; then
-    NTodo=`grep "^[ ]*\[[-xX]*\][ ]*.*" $File | wc -l`
-    NDone=`grep "^[ ]*\[[xX]\][ ]*.*" $File | wc -l`
+    NTodo=`echo "$Text" | grep "^[ ]*\[[^x]\][ ]*.*" | wc -l`
+    NDone=`echo "$Text" | grep "^[ ]*\[[x]\][ ]*.*"  | wc -l`
     if [ "$NDone" == "0" ]; then
       echo "$NTodo active tasks"
     elif [ "$NDone" == "1" ]; then
