@@ -2,6 +2,7 @@
 
 #Defaults
 File="~/todo.md"
+ArchiveFile="done.md"
 ShowDue=0
 Archive=0
 CompleteQuery=0
@@ -38,6 +39,8 @@ DESCRIPTION
    file are shown
 
    OPTIONS:
+   -a ARCHIVE FILE
+      Use an arhive file other than the default done.md
    -b CHECKBOX FORMAT
       Format of checkbox to use in front of task, e.g "[]", "[ ]" or "- [ ]" 
       Default is "- [ ]"
@@ -139,7 +142,7 @@ function list()
 function archive()
 {
   ArchiveDir=`dirname $File`
-  ArchiveFile=`echo $ArchiveDir/done.md`
+  ArchiveFile=`echo $ArchiveDir/$ArchiveFile`
   Date=`date +%Y-%m-%d`
 Done=`sed -n "s/^[ \t-]*\[[xX]\][ ]*\(.*\)/$Date \1/p" $File `
 if [ "$Done" == "" ]; then
@@ -235,7 +238,7 @@ function changeStatus()
 function showdue()
 {
   DueTasks=`sed -n 's/[ \t-]*\(.*\)due:\([0-9-]*\)\(.*\)/\2 \1 \3/p' $File `
-  if [ -z $DueTasks ]; then
+  if [ -z "$DueTasks" ]; then
     echo No tasks with due date found
     exit
   fi
@@ -243,17 +246,20 @@ function showdue()
   Tomorrow=`date -d '+1 day' +%Y-%m-%d`
   echo "$DueTasks
   == OVERDUE ==
-  $Today   == TODAY ==
-  $Tomorrow   == FUTURE ==" | sort |
-    sed 's/.*== TODAY ==.*/             == TODAY ==/g' | 
-    sed 's/.*== FUTURE ==.*/             == FUTURE ==/g'
+$Today   == TODAY ==
+$Tomorrow   == FUTURE ==" | sort |
+   sed 's/.*== TODAY ==.*/  == TODAY ==/g' | 
+   sed 's/.*== FUTURE ==.*/ == FUTURE ==/g'
 }
 
 #MAIN
 
-while getopts “b:f:hct” OPTION
+while getopts “a:b:f:hct” OPTION
 do
   case $OPTION in
+    a)
+      ArchiveFile=$OPTARG
+      ;;
     f)
       File=$OPTARG
       ;;
