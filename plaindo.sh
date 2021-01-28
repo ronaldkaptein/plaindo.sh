@@ -27,13 +27,14 @@ DESCRIPTION
    The plain-text todo file is assumed to have the format:
 
    # Project1
-      [] Task 1
-      [ ] Task 2
-   # Project2
-      - [] Task 1
-      - [x] Task 2
+   [] Task 1
+   [ ] Task 2
 
-   The checkbox can contain a space, and a dash is allowed to be in front. 
+   # Project2
+   - [] Task 1
+   - [x] Task 2
+
+   The checkbox can contain a space, and a dash is allowed to be in front.
 
    If no arguments and options are specified, the contents of the todo
    file are shown
@@ -42,15 +43,15 @@ DESCRIPTION
    -a ARCHIVE FILE
       Use an arhive file other than the default done.md
    -b CHECKBOX FORMAT
-      Format of checkbox to use in front of task, e.g "[]", "[ ]" or "- [ ]" 
+      Format of checkbox to use in front of task, e.g "[]", "[ ]" or "- [ ]"
       Default is "- [ ]"
-   -c 
+   -c
       Do not use color/bold in output (slightly faster)
    -f TODO FILE
       Use a todo file other than the default ~/todo.md
    -h
       Show this help
-   -t 
+   -t
       Print totals when using list (slower)
 
 
@@ -115,13 +116,15 @@ function list()
     Prio2Text=`echo -e '\e[0;36m'`
     TitleText=`echo -e '\e[4;33m'`
     NormalText=`echo -e '\e[0m'`
-    echo "$Text" | sed "s/^\([ \t-]*\[1\].*\)$/$HighPrioText\1$NormalText/g" | 
-      sed "s/^\([ \t-]*\[[ ]\][ ]*(1).*\)$/$HighPrioText\1$NormalText/g" | 
-      sed "s/^\([ \t-]*\[[xX]\] .*\)$/$DoneText\1$NormalText/g" | 
-      sed "s/^\([ \t-]*\[[wW3]\] .*\)$/$LowPrioText\1$NormalText/g" | 
-      sed "s/^\([ \t-]*\[[ ]\][ ]*(3).*\)$/$LowPrioText\1$NormalText/g" | 
-      sed "s/^\([ \t-]*\[2\] .*\)$/$Prio2Text\1$NormalText/g" | 
-      sed "s/^\([ \t-]*\[[ ]\][ ]*(2).*\)$/$Prio2Text\1$NormalText/g" | 
+    echo "$Text" | sed "s/^\([ \t-]*\[1\].*\)$/$HighPrioText\1$NormalText/g" |
+      sed "s/^\([ \t-]*\[[ ]\][ ]*(1).*\)$/$HighPrioText\1$NormalText/g" |
+      sed "s/^\([ \t-]*\[[ ]\][ ]*.*\[!!\].*\)$/$HighPrioText\1$NormalText/g" |
+      sed "s/^\([ \t-]*\[[xX]\] .*\)$/$DoneText\1$NormalText/g" |
+      sed "s/^\([ \t-]*\[[wW3]\] .*\)$/$LowPrioText\1$NormalText/g" |
+      sed "s/^\([ \t-]*\[[ ]\][ ]*(3).*\)$/$LowPrioText\1$NormalText/g" |
+      sed "s/^\([ \t-]*\[2\] .*\)$/$Prio2Text\1$NormalText/g" |
+      sed "s/^\([ \t-]*\[[ ]\][ ]*(2).*\)$/$Prio2Text\1$NormalText/g" |
+      sed "s/^\([ \t-]*\[[ ]\][ ]*.*\[!\].*\)$/$Prio2Text\1$NormalText/g" |
       sed "s/^\([ \t-]*[#].*\)$/$TitleText\1$NormalText/g"
   else
      echo "$Text"
@@ -185,13 +188,13 @@ function add()
     echo "Multiple matches for \"$Project\", please specify unique query"
     exit
   else
-    ActualProject=`grep -i -E "^#*[ ]*.*$Project.*" $File | sed 's/^#*[ ]*\(.*\)$/\1/g'` 
+    ActualProject=`grep -i -E "^#*[ ]*.*$Project.*" $File | sed 's/^#*[ ]*\(.*\)$/\1/g'`
     if [ "$ActualProject" != "INBOX" ]; then
       Task=`echo $Task | sed -n "s/\(^.*\)\($ProjectSymbol$Project\)\(.*\)/\1\3/p" | sed "s/  */ /g" | sed "s/^[ ]*//g"`
     fi
     echo Adding to project $ActualProject: $Task
     ProjectLine=`grep -i -E "^[#]*[ ]*.*$Project.*" $File`
-    sed -i "s/^\($ProjectLine\)/\1\n   $CheckBoxFormat $Task/i" $File
+    sed -i "s/^\($ProjectLine\)/\1\n$CheckBoxFormat $Task/i" $File
   fi
 }
 
@@ -248,7 +251,7 @@ function showdue()
   == OVERDUE ==
 $Today   == TODAY ==
 $Tomorrow   == FUTURE ==" | sort |
-   sed 's/.*== TODAY ==.*/  == TODAY ==/g' | 
+   sed 's/.*== TODAY ==.*/  == TODAY ==/g' |
    sed 's/.*== FUTURE ==.*/ == FUTURE ==/g'
 }
 
@@ -295,7 +298,7 @@ else
   arguments=$*
 fi
 
-case $action in 
+case $action in
   showdue | due)
     showdue $arguments
     exit
