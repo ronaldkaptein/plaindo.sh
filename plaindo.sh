@@ -39,6 +39,10 @@ DESCRIPTION
    If no arguments and options are specified, the contents of the todo
    file are shown
 
+   Output is colored by default, meaning that done tasks, high priority task etc.
+   will stand out. However, this doesn't always work as expected when multiple colors
+   are applied to a single tasks (e.g. a high priority task with a tag)
+
    OPTIONS:
    -a ARCHIVE FILE
       Use an arhive file other than the default done.md
@@ -115,17 +119,18 @@ function list()
     LowPrioText=`echo -e '\e[0;31m'`
     Prio2Text=`echo -e '\e[0;36m'`
     TitleText=`echo -e '\e[4;33m'`
+    TagText=`echo -e '\e[0;34m'`
+    DueText=`echo -e '\e[1;34m'`
     NormalText=`echo -e '\e[0m'`
-    echo "$Text" | sed "s/^\([ \t-]*\[1\].*\)$/$HighPrioText\1$NormalText/g" |
-      sed "s/^\([ \t-]*\[[ ]\][ ]*(1).*\)$/$HighPrioText\1$NormalText/g" |
-      sed "s/^\([ \t-]*\[[ ]\][ ]*.*\[!!\].*\)$/$HighPrioText\1$NormalText/g" |
-      sed "s/^\([ \t-]*\[[xX]\] .*\)$/$DoneText\1$NormalText/g" |
-      sed "s/^\([ \t-]*\[[wW3]\] .*\)$/$LowPrioText\1$NormalText/g" |
-      sed "s/^\([ \t-]*\[[ ]\][ ]*(3).*\)$/$LowPrioText\1$NormalText/g" |
-      sed "s/^\([ \t-]*\[2\] .*\)$/$Prio2Text\1$NormalText/g" |
-      sed "s/^\([ \t-]*\[[ ]\][ ]*(2).*\)$/$Prio2Text\1$NormalText/g" |
-      sed "s/^\([ \t-]*\[[ ]\][ ]*.*\[!\].*\)$/$Prio2Text\1$NormalText/g" |
-      sed "s/^\([ \t-]*[#].*\)$/$TitleText\1$NormalText/g"
+    echo "$Text" | sed "s/^\([ \t-]*\[1\].*\)$/$HighPrioText\1$NormalText/g" | #task with [1] checkbox (prio 1)
+      sed "s/^\([ \t-]*\[[ ]\][ ]*.*!!.*\)$/$HighPrioText\1$NormalText/g" | # task with !! at end (prio 1)
+      sed "s/^\([ \t-]*\[[xX]\] .*\)$/$DoneText\1$NormalText/g" | #done
+      sed "s/^\([ \t-]*\[[wW]\] .*\)$/$LowPrioText\1$NormalText/g" | #task with [w] checkbox
+      sed "s/^\([ \t-]*\[2\] .*\)$/$Prio2Text\1$NormalText/g" |  #task with [2] checkbox (prio 2)
+      sed "s/^\([ \t-]*\[[ ]\][ ]*.*!.*\)$/$Prio2Text\1$NormalText/g" | #task with ! at end (prio 2)
+      sed "s/\(@[a-zA-Z0-9]*\)/$TagText\1$NormalText/g" | #color tags of format @tagname, which should be at end of line
+      sed "s/\(due:[0-9-]*\)/$DueText\1$NormalText/g" | #color due date, like due:21-01, which should be at end of line
+      sed "s/^\([ \t-]*[#].*\)$/$TitleText\1$NormalText/g" #Project title
   else
      echo "$Text"
   fi
